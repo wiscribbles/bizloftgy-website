@@ -2,8 +2,8 @@
 
 Landing page for The Business Loft, 43 Croal Street, Stabroek, Georgetown.
 
-- **Plan signup** for Mailbox Only, Virtual Office and Virtual Office Plus runs through the SphereMail API. Small server-side functions handle it, so no API token ever reaches the browser.
-- **Meeting-room booking** uses the OfficeRnD Growth Hub web component (`https://e-commerce.officernd.com/webc`).
+- **Plan signup** for Mailbox Only, Virtual Office and Virtual Office Plus links to the SphereMail signup page (`https://thebusinessloft.spheremail.co/customers/get_voffice`). The server-side API functions remain in the repo but are unused.
+- **Meeting-room booking** links to the OfficeRnD booking page (`https://e-commerce.officernd.com/bizloftgy`).
 - The site has no framework and no runtime dependencies. It runs on Netlify.
 
 ```
@@ -90,20 +90,9 @@ Test with a real email address on a Netlify deploy preview before sending the si
 
 ## OfficeRnD booking
 
-1. The OfficeRnD organisation is `bizloftgy` (set as `data-slug` in `public/index.html`), so the storefront is `https://e-commerce.officernd.com/bizloftgy`.
-2. The component opens on the meeting-room listing (`initial-route="dashboard?type=meeting_room&listingType=resource"`). Change `data-initial-route` if you want a different page.
-3. Set the room's prices in OfficeRnD to match the rate card, including the off-peak rate and the 10% discount for Virtual Office clients.
+The meeting-room section links to the OfficeRnD booking page, https://e-commerce.officernd.com/bizloftgy, which opens in a new tab. It is not embedded in the page: embedding meant customers had to be sent to OfficeRnD's own page to finish booking anyway. With nothing embedded, the site loads no third-party scripts, and the CSP allows only the site's own files.
 
-How it loads:
-
-- The booking script loads only when a visitor scrolls near the booking block, so it doesn't slow the first screen.
-- If OfficeRnD can't load, the block shows *Message us on WhatsApp* and *Call* buttons instead of an empty box.
-- Google Tag Manager inside the component is switched off (`skip-gtm-initialization`). The site doesn't use GTM, and the CSP would block it.
-
-If the calendar ever fails to load after an OfficeRnD update:
-
-- Look in *Netlify → Logs → Functions → csp-report* for `csp_violation` lines. Each line names the blocked domain.
-- Add that domain to the matching directive in `netlify.toml`.
+Keep the room's details and prices in OfficeRnD in line with the rate card: 10 seats, Saturday 08:00–12:00 off-peak and no evening slots.
 
 ## Prices switch automatically on 1 January 2027
 

@@ -59,56 +59,6 @@
   });
 
   // ---------------------------------------------------------------------------
-  // 4. Meeting-room booking — OfficeRnD Growth Hub web component.
-  //    The script is only fetched when the booking block nears the screen.
-  //    If it can't load (not configured, blocked, offline) the WhatsApp
-  //    fallback stays visible, so a visitor is never left with an empty box.
-  // ---------------------------------------------------------------------------
-  const ornd = $('[data-officernd]');
-  const orndFallback = $('[data-officernd-fallback]');
-  const orndLoading = $('[data-officernd-loading]');
-  const OFFICERND_SRC = 'https://e-commerce.officernd.com/webc';
-
-  let orndMounted = false;
-  function mountOfficeRnD() {
-    if (orndMounted) return;
-    orndMounted = true;
-    const slug = (ornd.dataset.slug || '').trim();
-    const fail = () => { orndLoading.hidden = true; orndFallback.hidden = false; };
-    if (!slug || /^REPLACE/i.test(slug) || !/^[a-z0-9-]{2,80}$/i.test(slug)) { fail(); return; } // not configured
-    const el = document.createElement('growth-hub');
-    el.setAttribute('slug', slug);
-    if (ornd.dataset.initialRoute) el.setAttribute('initial-route', ornd.dataset.initialRoute);
-    el.setAttribute('skip-gtm-initialization', 'true');
-    const s = document.createElement('script');
-    s.src = OFFICERND_SRC;
-    s.defer = true;
-    s.onerror = fail;
-    document.head.appendChild(s);
-    const timer = setTimeout(fail, 15000);
-    customElements.whenDefined('growth-hub').then(() => {
-      clearTimeout(timer);
-      orndLoading.hidden = true;
-      orndFallback.hidden = true;
-      ornd.appendChild(el);
-    });
-  }
-  if (ornd) {
-    if ('IntersectionObserver' in window) {
-      const io = new IntersectionObserver((entries) => {
-        if (entries.some((e) => e.isIntersecting)) { io.disconnect(); mountOfficeRnD(); }
-      }, { rootMargin: '600px 0px' });
-      io.observe(ornd);
-      // Safety net: if the observer never fires (some in-app browsers), load
-      // the calendar a few seconds after the page has finished loading anyway.
-      const late = () => setTimeout(() => { io.disconnect(); mountOfficeRnD(); }, 4000);
-      if (document.readyState === 'complete') late(); else window.addEventListener('load', late, { once: true });
-    } else {
-      mountOfficeRnD();
-    }
-  }
-
-  // ---------------------------------------------------------------------------
   // 5. Plan signup (SphereMail via our own /api functions).
   // ---------------------------------------------------------------------------
   const PLAN_NAMES = { mailbox_only: 'Mailbox Only', virtual_office: 'Virtual Office', virtual_office_plus: 'Virtual Office Plus' };
