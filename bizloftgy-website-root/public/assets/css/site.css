@@ -369,3 +369,10 @@ fieldset.field { border: 0; margin: 0; padding: 0; min-width: 0; }
 .extras tbody th { white-space: normal; }
 .page-top .doc.section { padding-top: 0; }
 .booking-alt { margin: 14px 0 0; }
+.usd { font-family: var(--font-body); font-weight: 400; font-size: 0.85em; color: var(--navy-70); white-space: nowrap; }
+.plan-price .usd { font-size: 16px; letter-spacing: 0; }
+.plan--featured .usd, .on-dark .usd { color: var(--navy-pale); }
+.trust .usd, .price-line .usd { font-size: 0.8em; }
+.plan-body > .btn { margin-top: auto; }
+.booking-card [data-officernd] { margin: 4px 0 18px; }
+.booking-actions { margin-top: 4px; }

@@ -35,19 +35,20 @@
 # ---------------------------------------------------------------------------
 # Security headers for every response.
 # CSP notes:
-#  - Only the site's own files are allowed: no third-party scripts, styles or frames.
-#    Plan signup (SphereMail) and room booking (OfficeRnD) are on their own sites, reached by links.
+#  - The only third-party code allowed is the OfficeRnD booking component (e-commerce.officernd.com,
+#    its CloudFront CDN, and Stripe for its checkout). It needs 'unsafe-inline' styles.
+#    Plan signup (SphereMail) is on its own site, reached by links.
 #  - Violations are reported to /api/csp-report and show up in the Netlify function log.
 # ---------------------------------------------------------------------------
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'none'; worker-src 'self'; media-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /api/csp-report"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://e-commerce.officernd.com https://d35ll89fr5oblf.cloudfront.net https://js.stripe.com https://*.js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.officernd.com https://d35ll89fr5oblf.cloudfront.net; font-src 'self' data: https://fonts.gstatic.com https://*.officernd.com https://d35ll89fr5oblf.cloudfront.net; img-src 'self' data: blob: https:; connect-src 'self' https://e-commerce.officernd.com https://*.officernd.com https://d35ll89fr5oblf.cloudfront.net https://api.stripe.com; frame-src https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://*.officernd.com; worker-src 'self' blob:; media-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.officernd.com https://hooks.stripe.com; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /api/csp-report"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), serial=(), payment=()"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), serial=(), payment=(self \"https://js.stripe.com\" \"https://e-commerce.officernd.com\")"
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
     X-Permitted-Cross-Domain-Policies = "none"
 
