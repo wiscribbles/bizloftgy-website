@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://www.bizloftgy.com/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#081738">
-<meta name="build" content="2026-09-30-a">
+<meta name="build" content="2026-09-30-b">
 <meta name="format-detection" content="telephone=no">
 
 <meta property="og:type" content="website">
@@ -226,23 +226,27 @@
 
       <div class="booking-card" aria-labelledby="booking-title">
         <h3 id="booking-title">Check availability and book</h3>
+        <p>Pick a time in the calendar below, or open the booking page in its own tab.</p>
         <ul class="booking-points">
           <li><b>Weekdays</b> 08:30–16:30 · one-hour minimum</li>
           <li><b>Saturdays</b> 08:00–12:00</li>
           <li><b>Free changes</b> up to 24 hours before</li>
         </ul>
-        <!-- OfficeRnD Growth Hub, opened on the meeting-room listing. The script
-             (https://e-commerce.officernd.com/webc) is loaded by site.js when this
-             block nears the screen. -->
-        <div data-officernd data-slug="bizloftgy" data-initial-route="resources/6aa12ce0276695ee76ff07fd">
-          <div class="booking-loading" data-officernd-loading><span class="spinner" aria-hidden="true"></span>Loading availability…</div>
-        </div>
-        <p class="booking-fallback" data-officernd-fallback hidden><strong>The booking calendar didn’t load here.</strong> Use the button below to book on our booking page.</p>
         <div class="btn-row booking-actions">
           <a class="btn btn--gold" href="https://e-commerce.officernd.com/bizloftgy/resources/6aa12ce0276695ee76ff07fd" rel="noopener" target="_blank">Open the booking page</a>
         </div>
         <p class="small muted booking-note">Opens in a new tab. Prefer to arrange it directly? <a href="https://wa.me/5926032923?text=Hi%2C%20I%27d%20like%20to%20book%20the%20meeting%20room%20at%20The%20Business%20Loft." rel="noopener" target="_blank">WhatsApp (+592) 603-2923</a> or call <a href="tel:+5922251164">(+592) 225-1164</a> and we’ll confirm within the hour.</p>
       </div>
+    </div>
+    <div class="wrap booking-embed">
+      <!-- OfficeRnD Growth Hub on the meeting-room page. site.js loads
+           https://e-commerce.officernd.com/webc when this block nears the screen.
+           The booking app routes with the URL hash, so site.js keeps in-page
+           links from changing the hash (see "In-page links"). -->
+      <div data-officernd data-slug="bizloftgy" data-initial-route="resources/6aa12ce0276695ee76ff07fd">
+        <div class="booking-loading" data-officernd-loading><span class="spinner" aria-hidden="true"></span>Loading the booking calendar…</div>
+      </div>
+      <p class="booking-fallback" data-officernd-fallback hidden><strong>The booking calendar didn’t load here.</strong> Use “Open the booking page” above to book in a new tab.</p>
     </div>
   </section>
 

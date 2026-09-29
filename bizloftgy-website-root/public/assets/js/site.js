@@ -46,6 +46,37 @@
   }
 
   // ---------------------------------------------------------------------------
+  // In-page links. The OfficeRnD booking app uses the URL hash for its own
+  // routing, so "#book" would be read as an organisation called "book" and fail.
+  // Section links therefore scroll without changing the hash, and a section
+  // hash in the address on arrival is cleared once the page has scrolled to it.
+  // ---------------------------------------------------------------------------
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function goToSection(id, smooth) {
+    const target = id && document.getElementById(id);
+    if (!target) return false;
+    target.scrollIntoView({ behavior: smooth && !reduceMotion ? 'smooth' : 'auto', block: 'start' });
+    if (!target.matches('a, button, input, select, textarea, [tabindex]')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+    return true;
+  }
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const url = new URL(a.getAttribute('href'), location.href);
+    if (url.origin !== location.origin || url.pathname !== location.pathname || !url.hash || url.hash.startsWith('#/')) return;
+    if (goToSection(decodeURIComponent(url.hash.slice(1)), true)) e.preventDefault();
+  });
+  if (location.hash && !location.hash.startsWith('#/')) {
+    const id = decodeURIComponent(location.hash.slice(1));
+    history.replaceState(null, '', location.pathname + location.search);
+    if (document.getElementById(id)) {
+      goToSection(id, false);
+      window.addEventListener('load', () => goToSection(id, false), { once: true });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // 3. Monthly / annual toggle on the plan cards.
   // ---------------------------------------------------------------------------
   const plansSection = $('[data-plans]');
@@ -74,12 +105,13 @@
     if (orndMounted) return;
     orndMounted = true;
     const slug = (ornd.dataset.slug || '').trim();
-    const fail = () => { orndLoading.hidden = true; orndFallback.hidden = false; };
+    const fail = () => { orndLoading.hidden = true; ornd.hidden = true; orndFallback.hidden = false; };
     if (!slug || /^REPLACE/i.test(slug) || !/^[a-z0-9-]{2,80}$/i.test(slug)) { fail(); return; } // not configured
     const el = document.createElement('growth-hub');
     el.setAttribute('slug', slug);
     if (ornd.dataset.initialRoute) el.setAttribute('initial-route', ornd.dataset.initialRoute);
     el.setAttribute('skip-gtm-initialization', 'true');
+    el.setAttribute('eager', ''); // we already wait until it's near the screen
     const s = document.createElement('script');
     s.src = OFFICERND_SRC;
     s.defer = true;
@@ -90,6 +122,7 @@
       clearTimeout(timer);
       orndLoading.hidden = true;
       orndFallback.hidden = true;
+      ornd.hidden = false;
       ornd.appendChild(el);
     });
   }
