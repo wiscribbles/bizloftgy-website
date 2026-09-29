@@ -1,0 +1,14 @@
+{
+  "name": "bizloftgy-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Business Loft — www.bizloftgy.com. Static landing page with Netlify Functions for SphereMail plan signup and the OfficeRnD meeting-room booking component.",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "SPHEREMAIL_MOCK=1 LOCAL_DEV=1 node scripts/dev-server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "license": "UNLICENSED"
+}
