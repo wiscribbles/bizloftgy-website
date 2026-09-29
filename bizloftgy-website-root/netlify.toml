@@ -11,24 +11,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
-# One canonical host: apex → www, always HTTPS (Netlify also forces HTTPS once the certificate is issued).
-[[redirects]]
-  from = "https://bizloftgy.com/*"
-  to = "https://www.bizloftgy.com/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "http://bizloftgy.com/*"
-  to = "https://www.bizloftgy.com/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "http://www.bizloftgy.com/*"
-  to = "https://www.bizloftgy.com/:splat"
-  status = 301
-  force = true
+# One canonical host: www.bizloftgy.com. Netlify redirects bizloftgy.com to it
+# automatically once www is set as the primary domain (Domain management), and
+# upgrades http:// to https:// before any rule here runs. Adding our own
+# apex/www rules on top of that can create a redirect loop, so there are none.
 
 # Friendly paths used in print and on social profiles.
 [[redirects]]
