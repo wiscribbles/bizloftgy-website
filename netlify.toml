@@ -1,0 +1,90 @@
+# Netlify configuration — The Business Loft (www.bizloftgy.com)
+# Static site in /public, three small serverless functions in /netlify/functions.
+# Secrets are NOT set here. Set them in Netlify: Site configuration → Environment variables.
+# See README.md and .env.example for the list.
+
+[build]
+  publish = "public"
+  command = "node scripts/check.mjs"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# One canonical host: www.bizloftgy.com. Netlify redirects bizloftgy.com to it
+# automatically once www is set as the primary domain (Domain management), and
+# upgrades http:// to https:// before any rule here runs. Adding our own
+# apex/www rules on top of that can create a redirect loop, so there are none.
+
+# Friendly paths used in print and on social profiles.
+[[redirects]]
+  from = "/book"
+  to = "/#book"
+  status = 301
+
+[[redirects]]
+  from = "/plans"
+  to = "/#plans"
+  status = 301
+
+[[redirects]]
+  from = "/prices"
+  to = "/#prices"
+  status = 301
+
+# ---------------------------------------------------------------------------
+# Security headers for every response.
+# CSP notes:
+#  - The only third-party code allowed is the OfficeRnD booking component (e-commerce.officernd.com,
+#    its CloudFront CDN, the Kendo UI theme it loads from unpkg.com, and Stripe for its checkout).
+#    It needs 'unsafe-inline' styles.
+#    Plan signup (SphereMail) is on its own site, reached by links.
+#  - Violations are reported to /api/csp-report and show up in the Netlify function log.
+# ---------------------------------------------------------------------------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://e-commerce.officernd.com https://d35ll89fr5oblf.cloudfront.net https://js.stripe.com https://*.js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.officernd.com https://d35ll89fr5oblf.cloudfront.net https://unpkg.com; font-src 'self' data: https://fonts.gstatic.com https://*.officernd.com https://d35ll89fr5oblf.cloudfront.net https://unpkg.com; img-src 'self' data: blob: https:; connect-src 'self' https://e-commerce.officernd.com https://*.officernd.com https://d35ll89fr5oblf.cloudfront.net https://api.stripe.com; frame-src https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://*.officernd.com; worker-src 'self' blob:; media-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://*.officernd.com https://hooks.stripe.com; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /api/csp-report"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), serial=(), payment=(self \"https://js.stripe.com\" \"https://e-commerce.officernd.com\")"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    X-Permitted-Cross-Domain-Policies = "none"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/assets/fonts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+[[headers]]
+  for = "/assets/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+[[headers]]
+  for = "/.well-known/security.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+
+[[headers]]
+  for = "/404.html"
+  [headers.values]
+    X-Robots-Tag = "noindex"
