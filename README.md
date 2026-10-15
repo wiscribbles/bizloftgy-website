@@ -3,7 +3,7 @@
 Landing page for The Business Loft, Lot 43 Croal Street, Stabroek, Georgetown.
 
 - **Plan signup** buttons link to SphereMail's sign-up page with the plan and term preselected: `https://thebusinessloft.spheremail.co/customers/sign-up?plan_id=…&term=monthly|yearly` (Mailbox Only 8289, Virtual Office 8290, Virtual Office Plus 8291). The Monthly/Annual toggle on the page switches which link is shown. The server-side API functions remain in the repo but are unused.
-- **Meeting-room booking** embeds the OfficeRnD Growth Hub calendar, with a link to the booking page (`https://e-commerce.officernd.com/bizloftgy`) as a fallback.
+- **Meeting-room booking** is done on OfficeRnD's booking page, reached by the "Open the booking page" button. Nothing from OfficeRnD is embedded.
 - The site has no framework and no runtime dependencies. It runs on Netlify.
 
 ```
@@ -90,22 +90,29 @@ Test with a real email address on a Netlify deploy preview before sending the si
 
 ## OfficeRnD booking
 
-The meeting-room section embeds OfficeRnD's Growth Hub (`<growth-hub slug="bizloftgy" initial-route="resources/6aa12ce0276695ee76ff07fd">`), loaded by `site.js` from `https://e-commerce.officernd.com/webc`. An "Open the booking page" button is always shown as a fallback. If the calendar hasn't loaded within 15 seconds, the embed hides itself.
-
-- **Don't put `#section` in the page address.** Growth Hub routes with the URL hash and reads `#book` as an organisation name ("Integration settings not found for org book"). `site.js` scrolls in-page links without changing the hash and clears a section hash on arrival.
-- **The CSP must allow OfficeRnD's hosts.** These are e-commerce.officernd.com, CloudFront `d35ll89fr5oblf.cloudfront.net`, unpkg.com (Kendo theme CSS and fonts) and Stripe for checkout.
+All meeting-room bookings go through the "Open the booking page" button: https://e-commerce.officernd.com/bizloftgy/resources/6aa12ce0276695ee76ff07fd, which opens in a new tab. The embedded calendar was removed on 15 October 2026. The site now loads no third-party scripts, and its security policy (CSP) allows only its own files, plus one frame: the Google Maps locator in "Find us" (`storage.googleapis.com`).
 
 Keep the room's details and prices in OfficeRnD in line with the rate card: 10 seats, Mon–Fri 08:30–16:30, Saturday 08:00–12:00 and no evening slots.
+
+## Google Maps
+
+"Find us" embeds the Maps locator page `https://storage.googleapis.com/maps-solutions-avjp10qve5/locator-plus/uodr/locator-plus.html` in an iframe styled by `.map-frame`. Inline `style` attributes are blocked by the CSP, so size the map in `site.css`, not on the iframe.
 
 ## Business registration and company incorporation
 
 `/business-registration/` has two forms. Both post to Netlify functions, which check everything, then forward to a Google Apps Script web app that writes to a private Google Sheet and saves the uploads to Drive. Setup is in `google-apps-script/README.md`. Netlify needs `GOOGLE_SCRIPT_URL` and `GOOGLE_SCRIPT_SECRET`; until they're set, both forms ask applicants to WhatsApp or email instead.
 
-**Business-name registration** (`#apply`, `/api/registration`)
+**Business Registration package** (`#apply`, `/api/registration`)
 
-- **Price:** GYD 16,000 (US$80) one-off, which includes DCRA's fee and the GYD 1,000 mailbox set-up fee. Then Mailbox Only at GYD 6,000 (US$30) a month.
-- **Fields:** the particulars required by the Business Names (Registration) Act, plus email, the ID and TIN uploads, and a declaration. The principal place of business is fixed at Lot 43 Croal Street, Stabroek.
-- **Next step:** after submitting, applicants always go to SphereMail plan **8301** (monthly), which is where they pay.
+- **Price:** GYD 30,000 (US$150) one-off. It covers business-name registration with DCRA, plus applications for the GRA tax compliance certificate and the NIS compliance certificate. Mailbox Only follows at GYD 6,000 (US$30) a month.
+- **No long online form.** Clients download two PDFs from `public/assets/forms/`, complete them and upload them:
+  - `business-registration-application-form.pdf`, DCRA's fillable application. The principal place of business is locked (read-only) as Lot 43 Croal Street, Stabroek, Georgetown
+  - `bizloft-letter-of-authorization.pdf`, the letter authorising us to deal with DCRA, GRA and NIS. It is fillable: the date, full legal name (filled in once, shown in both places) and ID or passport number. The signature is done by hand or with a PDF app's sign tool.
+- **The upload form takes:**
+  - name, contact numbers and email
+  - four uploads: the application form, the authorisation form, the ID or passport, and the TIN certificate. Each must be PDF, JPG or PNG, at most 2 MB each and 4 MB in total. Photos are shrunk to about 0.9 MB.
+  - a declaration
+- **After submitting,** applicants always go to SphereMail plan **8301**, monthly, which is where they pay.
 
 **Company incorporation** (`#company`, `/api/incorporation`)
 
