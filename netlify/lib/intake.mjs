@@ -51,8 +51,22 @@ export function notConfigured(ref, invalid) {
   return json(503, { ok: false, code: 'NOT_CONFIGURED', message: 'Online applications aren’t switched on yet. Please WhatsApp us on (+592) 739-7855 or email support@bizloftgy.com and we’ll take your details directly.', ref });
 }
 
-/** Send a checked application to Apps Script. Returns a Response for the browser. */
-export async function forward(target, { kind, ref, record, files }, success, env = process.env) {
+/** How long we wait for Google before answering the browser. Netlify stops a
+ *  function at 10 seconds, so this counts from when the request arrived. */
+function waitBudget(env, startedAt) {
+  const budget = Number(env.GOOGLE_SCRIPT_TIMEOUT_MS || 8500);
+  return Math.max(budget - (Date.now() - startedAt), Math.min(1500, budget));
+}
+
+/**
+ * Send a checked application to Apps Script. Returns a Response for the browser.
+ *
+ * Saving four documents to Drive can take Google longer than Netlify lets a
+ * function run. Apps Script keeps going after we stop waiting, so a slow reply
+ * is answered with 202 PENDING and the reference; the browser then asks
+ * /api/application-status whether that reference has reached the sheet.
+ */
+export async function forward(target, { kind, ref, record, files }, success, env = process.env, startedAt = Date.now()) {
   const payload = {
     secret: target.secret,
     kind,
@@ -66,7 +80,7 @@ export async function forward(target, { kind, ref, record, files }, success, env
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
       redirect: 'follow',
-      signal: AbortSignal.timeout(Number(env.GOOGLE_SCRIPT_TIMEOUT_MS || 9000)),
+      signal: AbortSignal.timeout(waitBudget(env, startedAt)),
     });
     let data = null;
     try { data = await res.json(); } catch { /* not JSON: treated as failure below */ }
@@ -79,14 +93,43 @@ export async function forward(target, { kind, ref, record, files }, success, env
   } catch (e) {
     const timeout = e && (e.name === 'TimeoutError' || e.name === 'AbortError');
     log('intake_store_error', { kind, ref, timeout });
-    return json(timeout ? 504 : 502, {
-      ok: false,
-      code: timeout ? 'TIMEOUT' : 'UPSTREAM',
-      message: timeout
-        ? `This is taking longer than usual and your application may still have reached us. Before sending it again, WhatsApp us on (+592) 739-7855 with reference ${ref}.`
-        : GENERIC_FAIL,
-      ref,
+    if (timeout) {
+      return json(202, {
+        ok: false,
+        code: 'PENDING',
+        kind,
+        ref,
+        ...success,
+        message: `Still saving your documents (reference ${ref}). Please keep this page open.`,
+      });
+    }
+    return json(502, { ok: false, code: 'UPSTREAM', message: GENERIC_FAIL, ref });
+  }
+}
+
+export const KINDS = new Set(['business_name', 'company']);
+
+/**
+ * Ask Apps Script whether an application's row is in the sheet yet.
+ * Returns { found: true|false } or { error: 'UNSUPPORTED' | 'UPSTREAM' | 'TIMEOUT' }.
+ */
+export async function lookupRef(target, kind, ref, env = process.env) {
+  try {
+    const res = await fetch(target.url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ secret: target.secret, kind: 'status', form: kind, ref }),
+      redirect: 'follow',
+      signal: AbortSignal.timeout(Number(env.GOOGLE_STATUS_TIMEOUT_MS || 8000)),
     });
+    let data = null;
+    try { data = await res.json(); } catch { /* handled below */ }
+    if (res.ok && data && data.ok === true) return { found: data.found === true };
+    // The script in Google hasn't been updated with the status check yet.
+    if (data && data.code === 'BAD_KIND') return { error: 'UNSUPPORTED' };
+    return { error: 'UPSTREAM' };
+  } catch (e) {
+    return { error: e && (e.name === 'TimeoutError' || e.name === 'AbortError') ? 'TIMEOUT' : 'UPSTREAM' };
   }
 }
 

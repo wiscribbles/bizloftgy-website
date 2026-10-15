@@ -87,6 +87,7 @@ function doPost(e) {
   if (!secretMatches_(String(data.secret || ''), String(props.getProperty('SHARED_SECRET') || ''))) {
     return reply_({ ok: false, code: 'FORBIDDEN' });
   }
+  if (data.kind === 'status') return reply_(status_(data));
   var form = FORMS[data.kind || 'business_name'];
   if (!form) return reply_({ ok: false, code: 'BAD_KIND' });
   var record = data.record || {};
@@ -136,6 +137,19 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/** Is this reference in the sheet yet? Used by the website when saving the
+ *  documents took longer than it could wait. The row is added only after every
+ *  file is saved, so "found" means the whole application is stored. */
+function status_(data) {
+  var form = FORMS[data.form];
+  var ref = String(data.ref || '');
+  if (!form || !/^[0-9A-F]{10}$/.test(ref)) return { ok: false, code: 'BAD_REQUEST' };
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(form.sheet);
+  if (!sheet || sheet.getLastRow() < 2) return { ok: true, found: false };
+  var hit = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).createTextFinder(ref).matchEntireCell(true).findNext();
+  return { ok: true, found: Boolean(hit) };
 }
 
 /** Visiting the URL in a browser shows nothing useful. */

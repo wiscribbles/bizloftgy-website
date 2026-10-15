@@ -9,6 +9,7 @@ import { validateIncorporation, isActive, rolesOf, MAX_PARTIES, MAX_TOTAL_FILE_B
 import { scriptTarget, readApplication, isHoneypot, notConfigured, forward, safeLabel } from '../lib/intake.mjs';
 
 export default async (req, context) => {
+  const startedAt = Date.now();
   const env = process.env;
   const read = await readApplication(req, context, { key: 'inc', env });
   if (read.response) return read.response;
@@ -65,7 +66,7 @@ export default async (req, context) => {
       const who = safeLabel(record[`p${n}_name`], `party ${n}`);
       return { ...f, name: `${ref} Party ${n} ID - ${who} - ${label}.${f.ext}` };
     }),
-  }, { next: COMPANY_PLAN.url, plan: COMPANY_PLAN.name }, env);
+  }, { next: COMPANY_PLAN.url, plan: COMPANY_PLAN.name }, env, startedAt);
 };
 
 export const config = { path: '/api/incorporation', rateLimit: { windowLimit: 6, windowSize: 60, aggregateBy: ['ip', 'domain'] } };

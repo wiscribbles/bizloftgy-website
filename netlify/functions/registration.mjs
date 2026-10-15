@@ -10,6 +10,7 @@ import { scriptTarget, readApplication, isHoneypot, notConfigured, forward, safe
 export { scriptTarget };
 
 export default async (req, context) => {
+  const startedAt = Date.now();
   const env = process.env;
   const read = await readApplication(req, context, { key: 'reg', env });
   if (read.response) return read.response;
@@ -50,7 +51,7 @@ export default async (req, context) => {
       ...Object.fromEntries(Object.entries(value).map(([k, v]) => [k, sheetSafe(v)])),
     },
     files: files.map(({ short, ...f }) => ({ ...f, name: `${ref} ${short} - ${label}.${f.ext}` })),
-  }, { next: BUSINESS_PLAN.url, plan: BUSINESS_PLAN.name }, env);
+  }, { next: BUSINESS_PLAN.url, plan: BUSINESS_PLAN.name }, env, startedAt);
 };
 
 // Platform rate limit, counted across all instances.

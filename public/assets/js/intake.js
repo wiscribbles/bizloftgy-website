@@ -274,6 +274,13 @@
         let body = {};
         try { body = await res.json(); } catch { /* handled below */ }
         if (res.ok && body.ok) { finish(body); return; }
+        if (res.status === 202 && body.code === 'PENDING' && body.ref) {
+          // Google is still saving the documents. Wait until the row is in the sheet.
+          submitBtn.textContent = 'Still saving your documents…';
+          if (await confirmSaved(body.kind, body.ref)) { finish(body); return; }
+          showAlert(`We couldn’t confirm your application yet, but it has probably reached us. Before sending it again, WhatsApp us on (+592) 739-7855 with reference ${body.ref}.`);
+          return;
+        }
         if (body.fields) {
           Object.entries(body.fields).forEach(([k, v]) => setError(k, v));
           showAlert('Please check the highlighted fields.');
@@ -290,6 +297,26 @@
         submitBtn.textContent = submitText;
       }
     });
+
+    async function confirmSaved(kind, ref) {
+      const until = Date.now() + 60_000;
+      while (Date.now() < until) {
+        await new Promise((r) => setTimeout(r, 4000));
+        try {
+          const r = await fetch('/api/application-status', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'content-type': 'application/json', accept: 'application/json' },
+            body: JSON.stringify({ kind, ref }),
+          });
+          let b = {};
+          try { b = await r.json(); } catch { /* keep waiting */ }
+          if (r.ok && b.ok && b.found) return true;
+          if ([400, 403, 501, 503].includes(r.status)) return false;
+        } catch { /* network blip: keep waiting */ }
+      }
+      return false;
+    }
 
     function finish(body) {
       const nextBtn = $('[data-next]', done);
