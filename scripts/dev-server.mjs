@@ -14,7 +14,7 @@ import incorporation from '../netlify/functions/incorporation.mjs';
 const ROOT = new URL('../public/', import.meta.url).pathname;
 const PORT = Number(process.env.PORT || 8888);
 const routes = { '/api/plans': plans, '/api/signup/code': signupCode, '/api/signup': signup, '/api/csp-report': cspReport, '/api/registration': registration, '/api/incorporation': incorporation };
-const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.avif': 'image/avif', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.avif': 'image/avif', '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.pdf': 'application/pdf' };
 
 // Pull the global headers out of netlify.toml so local testing matches production.
 const toml = await readFile(new URL('../netlify.toml', import.meta.url), 'utf8');

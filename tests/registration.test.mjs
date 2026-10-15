@@ -5,38 +5,27 @@ import { validateRegistration, sniffType, sheetSafe, MAX_FILE_BYTES } from '../n
 import { _resetRateLimits } from '../netlify/lib/http.mjs';
 import handler, { scriptTarget } from '../netlify/functions/registration.mjs';
 
-const NOW = new Date('2026-10-08T12:00:00Z');
-const good = () => ({
-  business_name: 'Croal Street Traders', nature: 'Retail sale of clothing', present_names: 'Jane Mary Doe',
-  former_names: '', nationality: 'Guyanese', nationality_origin: '', residence: 'Lot 1 Main Street, Georgetown',
-  other_occupation: 'None', other_business_names: '', id_number: '123456789', dob: '1990-05-01',
-  phone: '+592 600 0000, 225 0000', email: 'Jane@Example.com', tin: '012345678', commencement: '2026-11-01',
-  consent: 'yes',
-});
+const good = () => ({ applicant_name: 'Jane Mary Doe', phone: '+592 600 0000, 225 0000', email: 'Jane@Example.com', consent: 'yes' });
 
 const PDF = new TextEncoder().encode('%PDF-1.4\n%test\n');
 const JPG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70]);
 const EXE = new Uint8Array([0x4d, 0x5a, 0x90, 0]);
+const allFiles = () => ({
+  application: [PDF, 'application/pdf'], authorization: [PDF, 'application/pdf'],
+  id_doc: [JPG, 'image/jpeg'], tin_cert: [PDF, 'application/pdf'],
+});
 
-test('valid application passes and normalises email', () => {
-  const r = validateRegistration(good(), NOW);
+test('valid details pass and email is normalised', () => {
+  const r = validateRegistration(good());
   assert.equal(r.ok, true, JSON.stringify(r.errors));
   assert.equal(r.value.email, 'jane@example.com');
 });
 
-test('required fields, consent and plan are enforced', () => {
-  const r = validateRegistration({ consent: 'no' }, NOW);
-  for (const k of ['business_name', 'nature', 'present_names', 'nationality', 'residence', 'other_occupation', 'id_number', 'dob', 'phone', 'email', 'tin', 'consent']) {
-    assert.ok(r.errors[k], `expected error for ${k}`);
-  }
-  assert.equal(r.errors.former_names, undefined);
-  assert.equal(r.errors.commencement, undefined);
-});
-
-test('applicant must be 18 and dates must be real', () => {
-  assert.ok(validateRegistration({ ...good(), dob: '2010-01-01' }, NOW).errors.dob);
-  assert.ok(validateRegistration({ ...good(), dob: '1990-02-30' }, NOW).errors.dob);
-  assert.ok(validateRegistration({ ...good(), commencement: '2030-01-01' }, NOW).errors.commencement);
+test('name, contact numbers, email and consent are required', () => {
+  const r = validateRegistration({ consent: 'no' });
+  for (const k of ['applicant_name', 'phone', 'email', 'consent']) assert.ok(r.errors[k], `expected error for ${k}`);
+  assert.ok(validateRegistration({ ...good(), email: 'nope' }).errors.email);
+  assert.ok(validateRegistration({ ...good(), phone: '12' }).errors.phone);
 });
 
 test('uploads are identified by content, not name', () => {
@@ -75,56 +64,50 @@ before(async () => {
 });
 after(() => server.close());
 
-function formWith(fields, files = { id_doc: [PDF, 'application/pdf', 'id.pdf'], tin_cert: [JPG, 'image/jpeg', 'tin.jpg'] }) {
+function formWith(fields, files = allFiles()) {
   const fd = new FormData();
   for (const [k, v] of Object.entries(fields)) fd.append(k, v);
-  for (const [k, [bytes, type, name]] of Object.entries(files)) fd.append(k, new Blob([bytes], { type }), name);
+  for (const [k, [bytes, type]] of Object.entries(files)) fd.append(k, new Blob([bytes], { type }), `${k}.bin`);
   return fd;
 }
 const post = (fd, origin = 'https://www.bizloftgy.com') =>
   handler(new Request('https://www.bizloftgy.com/api/registration', { method: 'POST', headers: { origin }, body: fd }), { ip: `10.0.0.${Math.floor(Math.random() * 250)}` });
 
-test('a good application is forwarded with both files and a reference', async () => {
+test('a complete submission is forwarded with all four documents and goes to plan 8301', async () => {
   _resetRateLimits(); received = [];
   const res = await post(formWith(good()));
   const body = await res.json();
   assert.equal(res.status, 200, JSON.stringify(body));
   assert.match(body.ref, /^[0-9A-F]{10}$/);
   assert.equal(body.next, 'https://thebusinessloft.spheremail.co/customers/sign-up?plan_id=8301&term=monthly');
-  assert.equal(received.length, 1);
   const sent = received[0];
-  assert.equal(sent.files.length, 2);
-  assert.equal(sent.record.principal_place.startsWith('Lot 43 Croal Street, Stabroek'), true);
-  assert.equal(sent.record.phone, "'+592 600 0000, 225 0000");
   assert.equal(sent.kind, 'business_name');
+  assert.deepEqual(sent.files.map((f) => f.field).sort(), ['application', 'authorization', 'id_doc', 'tin_cert']);
+  assert.match(sent.files.find((f) => f.field === 'authorization').name, / Authorization - Jane Mary Doe\.pdf$/);
+  assert.equal(sent.record.phone, "'+592 600 0000, 225 0000");
   assert.match(sent.record.plan_name, /8301/);
 });
 
-test('any plan value sent by the browser is ignored; sign-up is always plan 8301', async () => {
+test('each of the four documents is required', async () => {
   _resetRateLimits();
-  const body = await (await post(formWith({ ...good(), plan: 'virtual_office' }))).json();
-  assert.equal(body.next, 'https://thebusinessloft.spheremail.co/customers/sign-up?plan_id=8301&term=monthly');
+  const files = allFiles(); delete files.authorization; delete files.application;
+  const res = await post(formWith(good(), files));
+  const body = await res.json();
+  assert.equal(res.status, 422);
+  assert.ok(body.fields.authorization && body.fields.application);
 });
 
 test('a disguised executable is refused', async () => {
   _resetRateLimits();
-  const res = await post(formWith(good(), { id_doc: [EXE, 'application/pdf', 'id.pdf'], tin_cert: [JPG, 'image/jpeg', 't.jpg'] }));
+  const res = await post(formWith(good(), { ...allFiles(), id_doc: [EXE, 'application/pdf'] }));
   assert.equal(res.status, 422);
   assert.ok((await res.json()).fields.id_doc);
-});
-
-test('missing uploads are refused', async () => {
-  _resetRateLimits();
-  const res = await post(formWith(good(), {}));
-  const body = await res.json();
-  assert.equal(res.status, 422);
-  assert.ok(body.fields.id_doc && body.fields.tin_cert);
 });
 
 test('oversized upload is refused', async () => {
   _resetRateLimits();
   const big = new Uint8Array(MAX_FILE_BYTES + 10); big.set(PDF);
-  const res = await post(formWith(good(), { id_doc: [big, 'application/pdf', 'big.pdf'], tin_cert: [JPG, 'image/jpeg', 't.jpg'] }));
+  const res = await post(formWith(good(), { ...allFiles(), application: [big, 'application/pdf'] }));
   assert.equal(res.status, 422);
 });
 

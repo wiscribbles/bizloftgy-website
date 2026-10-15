@@ -25,6 +25,7 @@
     commencement: 'Enter a valid date, or leave it blank.',
     consent: 'Please confirm the declaration to continue.',
     company_name: 'Enter the proposed company name.',
+    applicant_name: 'Enter your full name.',
   };
   const partyMsg = (name) => {
     const m = /^p(\d)_(name|address|shares)$/.exec(name);
@@ -40,8 +41,8 @@
     const submitBtn = $('[data-submit]', form);
     const done = $(form.dataset.done);
     const prepared = new Map(); // upload field name -> Blob ready to send
-    const imageTarget = isCompany ? 700_000 : 1_400_000;
-    const maxSide = isCompany ? 1800 : 2200;
+    const imageTarget = Number(form.dataset.imageTarget) || (isCompany ? 700_000 : 1_400_000);
+    const maxSide = imageTarget < 1_000_000 ? 1800 : 2200;
     const MAX_BYTES = 2_000_000;
     const MAX_TOTAL = 4_000_000;
 
@@ -219,9 +220,6 @@
       }
       if (!parties.some((n) => form.elements[`p${n}_director`].checked)) { setError('directors', 'At least one person must be a Director.'); ok = false; }
       if (!parties.includes(Number(form.elements.secretary.value))) { setError('secretary', 'Choose one person as Company Secretary.'); ok = false; }
-      let bytes = 0;
-      for (const n of parties) { const b = prepared.get(`p${n}_id`); if (b) bytes += b.size; }
-      if (bytes > MAX_TOTAL) { setError('files_total', `The ID files add up to ${fmtMB(bytes)}. The total limit is 4 MB — use smaller scans or photos.`); ok = false; }
       return ok;
     }
 
@@ -239,6 +237,9 @@
           ok = false;
         }
       }
+      let bytes = 0;
+      for (const input of $$('[data-upload]', form)) { if (input.disabled) continue; const b = prepared.get(input.name); if (b) bytes += b.size; }
+      if (bytes > MAX_TOTAL) { setError('files_total', `Your files add up to ${fmtMB(bytes)}. The total limit is 4 MB — use smaller scans or photos.`); ok = false; }
       if (isCompany && !validateCompany()) ok = false;
       return ok;
     }

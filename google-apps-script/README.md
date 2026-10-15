@@ -2,7 +2,7 @@
 
 Both forms on `/business-registration/` send each application to one private Google Sheet:
 
-- **Business-name registration** goes to the **Business registrations** tab.
+- **Business Registration package** documents go to the **Business registrations** tab.
 - **Company incorporation** goes to the **Company incorporations** tab.
 
 Uploaded IDs and TIN certificates go to a private Google Drive folder, one sub-folder per application. Nothing is stored on the website itself.
@@ -71,3 +71,7 @@ Use **Deploy → Manage deployments → Edit → New version**. This keeps the s
 - **The notice email:** carries only the reference, business name and plan.
 
 What it does **not** protect against: someone getting into your Google account, or the sheet or folder being shared by mistake. Keep 2-Step Verification on, never use "Anyone with the link", and give staff their own Google accounts with access to the sheet rather than your password.
+
+## Changing the columns
+
+The script writes the heading row only when a tab is empty. If you created a tab before its columns changed (for example the Business registrations tab before 15 October 2026), delete that tab, or clear it, and run `setup` again, so the headings match the new columns.
