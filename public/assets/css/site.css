@@ -216,7 +216,7 @@ growth-hub { display: block; width: 100%; min-height: fit-content; }
 .plan-setup ~ .btn { margin-top: 0; }
 .room-side { display: grid; gap: 24px; }
 .room-photo { margin: 0; }
-.room-photo img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+.room-photo img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; }
 .room-photo figcaption { font-size: 14px; color: var(--navy-70); margin-top: 10px; }
 .room-photo-ph { aspect-ratio: 3 / 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--navy); color: var(--gold); text-align: center; padding: 24px; }
 .room-photo-ph svg { width: 96px; height: auto; }
