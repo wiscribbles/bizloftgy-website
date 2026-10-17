@@ -32,6 +32,17 @@
   to = "/#prices"
   status = 301
 
+# security.txt must answer at the RFC 9116 path, /.well-known/security.txt.
+# Netlify does not publish the dot-directory from `public/`, so the file is
+# kept at public/security.txt and rewritten (status 200, not a redirect) so
+# the canonical path serves it directly. Do NOT also add a 301 from
+# /security.txt to the .well-known path: it would point at this rewrite and
+# loop.
+[[redirects]]
+  from = "/.well-known/security.txt"
+  to = "/security.txt"
+  status = 200
+
 # ---------------------------------------------------------------------------
 # Security headers for every response.
 # CSP notes:
