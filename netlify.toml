@@ -32,6 +32,13 @@
   to = "/#prices"
   status = 301
 
+# security.txt lives at the RFC 9116 location. Scanners and older clients
+# still probe the web root, so point them at the canonical path.
+[[redirects]]
+  from = "/security.txt"
+  to = "/.well-known/security.txt"
+  status = 301
+
 # ---------------------------------------------------------------------------
 # Security headers for every response.
 # CSP notes:
