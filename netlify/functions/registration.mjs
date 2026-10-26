@@ -6,8 +6,11 @@
 import { json, newRef, log } from '../lib/http.mjs';
 import { validateRegistration, checkUpload, sheetSafe, BUSINESS_PLAN, PRINCIPAL_PLACE, TEXT_FIELDS, FILE_FIELDS, MAX_TOTAL_FILE_BYTES } from '../lib/registration.mjs';
 import { scriptTarget, readApplication, isHoneypot, notConfigured, forward, safeLabel } from '../lib/intake.mjs';
+import { sendConversionInBackground } from '../lib/meta-capi.mjs';
 
 export { scriptTarget };
+
+const SITE_URL = 'https://www.bizloftgy.com';
 
 export default async (req, context) => {
   const startedAt = Date.now();
@@ -40,7 +43,7 @@ export default async (req, context) => {
   if (!target.configured) return notConfigured(ref, target.invalid);
 
   const label = safeLabel(value.applicant_name, 'applicant');
-  return forward(target, {
+  const stored = await forward(target, {
     kind: 'business_name',
     ref,
     record: {
@@ -52,6 +55,24 @@ export default async (req, context) => {
     },
     files: files.map(({ short, ...f }) => ({ ...f, name: `${ref} ${short} - ${label}.${f.ext}` })),
   }, { next: BUSINESS_PLAN.url, plan: BUSINESS_PLAN.name }, env, startedAt);
+
+  // A stored application is a real, confirmed conversion — the strongest signal
+  // we have. Report it to Meta server-side, where ad blockers can't drop it.
+  // event_id is the application ref, so it would de-duplicate against a browser
+  // event of the same id if one is ever added. Sent in the background: this must
+  // never delay or fail the applicant's response.
+  if (stored.status === 200) {
+    sendConversionInBackground(context, {
+      eventName: 'CompleteRegistration',
+      eventId: ref,
+      user: { email: value.email, phone: value.phone, firstName: String(value.applicant_name || '').split(' ')[0], fbp: form.get('_fbp') || null, fbc: form.get('_fbc') || null },
+      custom: { content_name: BUSINESS_PLAN.name, content_category: 'business_registration' },
+      sourceUrl: `${SITE_URL}/business-registration/`,
+      req,
+      env,
+    });
+  }
+  return stored;
 };
 
 // Platform rate limit, counted across all instances.

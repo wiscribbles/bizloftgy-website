@@ -10,6 +10,9 @@ const SECRET_PATTERNS = [
   /TURNSTILE_SECRET/i, /GOOGLE_SCRIPT_SECRET\s*=\s*\S/, /script\.google\.com\/macros\/s\//, /0x4AAAAAA[A-Za-z0-9_-]{10,}/, /sk_(live|test)_[A-Za-z0-9]{10,}/,
   /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\./, /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
   /ghp_[A-Za-z0-9]{30,}/, /github_pat_[A-Za-z0-9_]{30,}/,
+  // Meta Conversions API access token. The pixel ID in the page is public and
+  // fine; the CAPI token is not, and must never reach /public.
+  /EAA[A-Za-z0-9]{60,}/, /META_CAPI_ACCESS_TOKEN\s*=\s*\S/,
 ];
 const problems = [];
 function walk(dir) {
