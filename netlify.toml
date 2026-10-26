@@ -46,15 +46,24 @@
 # ---------------------------------------------------------------------------
 # Security headers for every response.
 # CSP notes:
-#  - No third-party scripts or styles. Meeting-room booking (OfficeRnD) and plan signup
-#    (SphereMail) are on their own sites, reached by links.
-#  - The only third-party frame is the Google Maps locator in "Find us" (storage.googleapis.com).
+#  - Meeting-room booking (OfficeRnD) and plan signup (SphereMail) are on their own
+#    sites, reached by links.
+#  - Analytics (Oct 2026): Google Tag Manager (GTM-PQ2P3THL) and the Meta Pixel.
+#    Their two inline bootstrap snippets are allowed by SHA-256 hash, NOT by
+#    'unsafe-inline' — so if either snippet is re-pasted or reformatted (even a
+#    whitespace change), its hash changes and the script is silently blocked.
+#    Recompute the hash and update it here if you touch those blocks.
+#    Tags that GTM injects are only allowed from the hosts listed below; a new
+#    third-party tag added in the GTM console will be blocked until its host is
+#    added here. Blocks show up in the /api/csp-report function log.
+#  - Third-party frames: the Google Maps locator in "Find us"
+#    (storage.googleapis.com) and the GTM noscript iframe (googletagmanager.com).
 #  - Violations are reported to /api/csp-report and show up in the Netlify function log.
 # ---------------------------------------------------------------------------
 [[headers]]
   for = "/*"
   [headers.values]
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self'; frame-src https://storage.googleapis.com; worker-src 'self'; media-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /api/csp-report"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'sha256-w5a3WajLqCDHQT8xugA4V3y8rfLzl5l4orN247ldEpc=' 'sha256-jXbBIhgiGFHVA7RptwqZyM79Fk0xeN1MLBgwGOKpOP8=' https://www.googletagmanager.com https://connect.facebook.net; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://*.analytics.google.com https://*.google-analytics.com https://connect.facebook.net https://www.facebook.com; frame-src https://storage.googleapis.com https://www.googletagmanager.com; worker-src 'self'; media-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests; report-uri /api/csp-report"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
